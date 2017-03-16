@@ -10,13 +10,19 @@ jenkins_home: /var/lib/jenkins
 jenkins_hostname: localhost
 jenkins_http_port: 8080
 jenkins_jar_location: /opt/jenkins-cli.jar
-jenkins_plugins: []
+jenkins_plugins: 
+    - workflow-aggregator
+    - workflow-api
+    - workflow-step-api
+    - pipeline-build-step
+    - workflow-basic-steps
 jenkins_url_prefix: ""
 jenkins_java_options: "-Djenkins.install.runSetupWizard=false"
 
 jenkins_admin_username: admin
 jenkins_admin_password: admin
 jenkins_admin_password_file: ""
+jenkins_proxy_conf_file: "{{ jenkins_home }}/proxy.xml"
 
 jenkins_init_changes:
   - option: "JENKINS_ARGS"

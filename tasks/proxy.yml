@@ -1,0 +1,12 @@
+---
+# Jenkins proxy settings addition
+# 
+- name: "update Jenkins proxy setting"
+  template:
+    src: "proxy.xml.j2"
+    dest: "{{ jenkins_proxy_conf_file }}"
+    owner: jenkins
+    group: jenkins
+    mode: 0755
+  register: proxy_config
+  notify: restart jenkins
