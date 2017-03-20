@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <proxy>
-  <name>{{ proxy_host }}</name>
-  <port>{{ proxy_port }}</port>
+  <name>{{ ops_webproxy.split(':')[0] }}</name>
+  <port>{{ proxy_port.split(':')[1] }}</port>
   <testUrl>http://updates.jenkins-ci.org/update-center.json</testUrl>
 </proxy>
