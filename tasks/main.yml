@@ -70,3 +70,17 @@
     group: jenkins
     mode: 0755
   register: env_config
+
+- name: "Add env file to global properties"
+  blockinfile:
+    dest: "{{ jenkins_home }}/environment_file.cfg"
+    insertbefore: "</hudson>"
+    block: |
+         <globalNodeProperties>
+           <org.jenkinsci.plugins.envinject.EnvInjectNodeProperty plugin="envinject@latest">
+             <unsetSystemVariables>false</unsetSystemVariables>
+             <propertiesFilePath>/var/lib/jenkins/environment_file.cfg</propertiesFilePath>
+           </org.jenkinsci.plugins.envinject.EnvInjectNodeProperty>
+         </globalNodeProperties>
+
+  notify: restart jenkins
