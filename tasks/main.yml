@@ -60,3 +60,27 @@
 
 # Update Jenkins and install configured plugins.
 - include: plugins.yml
+
+# Include jenkins enviroment file
+- name: "Add Jenkins env file"
+  template:
+    src: "environment_file.cfg.j2"
+    dest: "{{ jenkins_home }}/environment_file.cfg"
+    owner: jenkins
+    group: jenkins
+    mode: 0755
+  register: env_config
+
+- name: "Add env file to global properties"
+  blockinfile:
+    dest: "{{ jenkins_home }}/environment_file.cfg"
+    insertbefore: "</hudson>"
+    block: |
+         <globalNodeProperties>
+           <org.jenkinsci.plugins.envinject.EnvInjectNodeProperty plugin="envinject@latest">
+             <unsetSystemVariables>false</unsetSystemVariables>
+             <propertiesFilePath>/var/lib/jenkins/environment_file.cfg</propertiesFilePath>
+           </org.jenkinsci.plugins.envinject.EnvInjectNodeProperty>
+         </globalNodeProperties>
+
+  notify: restart jenkins

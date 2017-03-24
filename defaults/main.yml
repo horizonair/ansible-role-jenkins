@@ -16,6 +16,7 @@ jenkins_plugins:
     - workflow-step-api
     - pipeline-build-step
     - workflow-basic-steps
+    - envinject
 jenkins_url_prefix: ""
 jenkins_java_options: "-Djenkins.install.runSetupWizard=false"
 
