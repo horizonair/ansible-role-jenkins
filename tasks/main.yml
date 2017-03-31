@@ -61,6 +61,16 @@
 # Update Jenkins and install configured plugins.
 - include: plugins.yml
 
+- set_fact:
+    http_proxy: ''
+    https_proxy: ''
+
+- name: if proxy create the https_proxy arg
+  set_fact:
+    http_proxy: 'http_proxy={{ ops_webproxy }}'
+    https_proxy: 'https_proxy={{ ops_webproxy }}'
+  when: ops_webproxy is defined and (ops_webproxy|trim != '')
+
 # Include jenkins enviroment file
 - name: "Add Jenkins env file"
   template:
@@ -71,9 +81,18 @@
     mode: 0755
   register: env_config
 
+- name: "Create job to download job config and create/reconfigure them"
+  jenkins_job:
+    config:  "{{ lookup('template', 'templates/Update_Jenkins_Jobs.xml.j2') }}"
+    name: Update_Jenkins_Jobs
+    user: "{{ jenkins_admin_username }}"
+    password: "{{ jenkins_admin_password }}"
+    url: http://localhost:8080
+
 - name: "Add env file to global properties"
   blockinfile:
-    dest: "{{ jenkins_home }}/environment_file.cfg"
+    dest: "{{ jenkins_home }}/config.xml"
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertbefore: "</hudson>"
     block: |
          <globalNodeProperties>
@@ -82,5 +101,4 @@
              <propertiesFilePath>/var/lib/jenkins/environment_file.cfg</propertiesFilePath>
            </org.jenkinsci.plugins.envinject.EnvInjectNodeProperty>
          </globalNodeProperties>
-
   notify: restart jenkins

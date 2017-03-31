@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H 0 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+    <hudson.triggers.SCMTrigger>
+      <spec></spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>
+rm -rvf jenkins
+
+export ST_AUTH=https://wdc.objectstorage.softlayer.net/auth/v1.0/
+export ST_USER=IBMOS1024841-2:deploy@hzaops-stage.vmw
+export ST_KEY=ab3f3539c9bf47ef3696d8eb3cc7e743c33b59c34f4838a8fdd0e02da034d55f
+
+{{ http_proxy }} swift download job_configurations</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/usr/bin/python
+
+import jenkins
+import os
+server = jenkins.Jenkins(&apos;http://localhost:8080/&apos;, username=&apos;{{ jenkins_admin_username }}&apos;, password=&apos;{{ jenkins_admin_password }}&apos;)
+
+jobs = []
+
+for job in server.get_jobs():
+    jobs.append(job[&apos;name&apos;])
+
+print &quot;Existing Jobs in jenkins:&quot;
+print jobs
+print &quot;\n&quot;
+
+for conf in os.listdir(&apos;jenkins&apos;):
+    job = conf.split(&apos;.&apos;)[0]
+    file = open(&apos;jenkins/&apos; + conf, &quot;r&quot; )
+    content = file.read()
+    if job in jobs:
+        print &quot;\nReconfiguring job:&quot; + job
+        server.reconfig_job(job, content)
+    else:
+        print &quot;\nCreating job:&quot; + job
+        server.create_job(job, content)
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

@@ -46,3 +46,8 @@
     name: jenkins
     state: installed
   when: jenkins_version is undefined
+
+- name: Install Python Jenkins module
+  apt:
+    name: python-jenkins
+    state: installed
