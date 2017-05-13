@@ -124,3 +124,9 @@
     dest: "{{ key_file }}"
     mode: 0600
     owner: jenkins
+
+- name: Add FW rule to allow port 8080
+  ufw:
+    rule: allow
+    port: 8080
+    proto: tcp
