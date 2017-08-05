@@ -3,8 +3,28 @@
   <actions/>
   <description></description>
   <keepDependencies>false</keepDependencies>
-  <properties/>
-  <scm class="hudson.scm.NullSCM"/>
+  <properties>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.5.0">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://{{ hzajenkins_git_token }}:x-oauth-basic@github.com/horizonair/hza-sre.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/develop</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
   <canRoam>true</canRoam>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
@@ -21,42 +41,36 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>
-rm -rvf jenkins
+      <command>#!/bin/bash
 
-export ST_AUTH=https://wdc.objectstorage.softlayer.net/auth/v1.0/
-export ST_USER=IBMOS1024841-2:deploy@hzaops-stage.vmw
-export ST_KEY=ab3f3539c9bf47ef3696d8eb3cc7e743c33b59c34f4838a8fdd0e02da034d55f
+unset http_proxy https_proxy
 
-{{ http_proxy }} swift download job_configurations</command>
-    </hudson.tasks.Shell>
-    <hudson.tasks.Shell>
-      <command>#!/usr/bin/python
+function clean_and_exit() {
+    if [ $? == 0 ]; then
+        status=&quot;SUCCESS&quot;
+        emoji=&quot;:victory:&quot;
+    else
+        status=&quot;FAILURE&quot;
+        emoji=&quot;:epic_fail:&quot;
+    fi
+    if [ &quot;$ENVIRONMENT&quot; == &quot;staging&quot; ]
+    then
+        slackChannel=&quot;hd-softlayer-$ENVIRONMENT&quot;
+        export https_proxy=${DATA_CENTER}-0-webproxy-a.hzaops-stage.vmw:3128
+    else
+        slackChannel=&quot;hd-softlayer-prod&quot;
+        export https_proxy=${DATA_CENTER}-0-webproxy-a.hzaops.vmw:3128
+    fi
 
-import jenkins
-import os
-server = jenkins.Jenkins(&apos;http://localhost:8080/&apos;, username=&apos;{{ jenkins_admin_username }}&apos;, password=&apos;{{ jenkins_admin_password }}&apos;)
+    url=&quot;http://`hostname`:8080/job/$JOB_NAME/$BUILD_NUMBER/console&quot;
+    echo &quot;Sending slack notification to $slackChannel&quot;
 
-jobs = []
+    curl -s -X POST --data-urlencode &quot;payload={\&quot;channel\&quot;: \&quot;$slackChannel\&quot;, \&quot;username\&quot;: \&quot;jenkins\&quot;, \&quot;text\&quot;: \&quot;Build #$BUILD_NUMBER($JOB_NAME) completed with status: $status in $DATA_CENTER. Logs are available at: $url $emoji\&quot;, \&quot;icon_emoji\&quot;: \&quot;:jenkins:\&quot;}&quot; https://hooks.slack.com/services/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
+}
 
-for job in server.get_jobs():
-    jobs.append(job[&apos;name&apos;])
+trap clean_and_exit 0
 
-print &quot;Existing Jobs in jenkins:&quot;
-print jobs
-print &quot;\n&quot;
-
-for conf in os.listdir(&apos;jenkins&apos;):
-    job = conf.split(&apos;.&apos;)[0]
-    file = open(&apos;jenkins/&apos; + conf, &quot;r&quot; )
-    content = file.read()
-    if job in jobs:
-        print &quot;\nReconfiguring job:&quot; + job
-        server.reconfig_job(job, content)
-    else:
-        print &quot;\nCreating job:&quot; + job
-        server.create_job(job, content)
-</command>
+./jenkins/scripts/import_jobs.py -u {{ jenkins_admin_username }} -p {{ jenkins_admin_password }}</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
