@@ -18,6 +18,7 @@ jenkins_plugins:
     - workflow-basic-steps
     - envinject
     - rebuild
+    - git
 jenkins_url_prefix: ""
 jenkins_java_options: "-Djenkins.install.runSetupWizard=false"
 
